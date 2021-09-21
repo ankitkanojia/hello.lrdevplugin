@@ -99,6 +99,13 @@ local function showCustomDialogWithObserver()
                 },
             },
             f:row {
+                place = 'overlapping',
+                frame_width = 50,
+                f:picture {
+                    value = _PLUGIN:resourceId( 'A.png' )
+                }
+            },
+            f:row {
 				spacing = f:control_spacing(),
                 f:static_text {
                     fill_horizontal = 1,
