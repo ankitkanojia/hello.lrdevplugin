@@ -26,6 +26,8 @@ local LrLogger = import 'LrLogger'
 local LrColor = import 'LrColor'
 local LrLogger = import 'LrLogger'
 local share = LrView.share
+local LrHttp = import "LrHttp"
+local LrMD5 = import "LrMD5"
 
 local function showCustomDialogWithObserver()
 
@@ -81,7 +83,68 @@ local function showCustomDialogWithObserver()
                 f:push_button {
 					title = "Normal Dialog",
 					action = function()
-                        LrDialogs.message("Form Values", "Simple dialog button")
+                        
+
+                        --Post Method
+
+                        local headers = {
+                            { field = 'Content-Type', value = "application/json" }
+                        }
+                        
+                        -- local postBody = {
+                        --     { field =  "name" , value = "morpheuss" },
+                        --     { field =  "job" , value = "leader" },
+                        -- }
+                        local postBody = {
+                            name = "morpheuss",
+                            job = "leader"
+                        }
+                        import "LrTasks".startAsyncTask( function()
+                            local response, hdrs = LrHttp.post( "https://reqres.in/api/users", postBody, headers, "POST" ,5000)
+                            if response then
+                                LrDialogs.message("Form Values", response)
+                            else
+                                LrDialogs.message("Form Values", "API issue")
+                            end
+                        end )
+
+                        -- -- Post Method
+                        -- local headers = {
+                        --     { field = 'Content-Type', value = "application/x-www-form-urlencoded" }
+                        -- }
+                        
+                        -- local name = 'morpheus1'
+                        -- local job = 'leader1'
+                        -- local postBody = "name=" .. name .. "&job=" .. job
+                        -- import "LrTasks".startAsyncTask( function()
+                        --     local response, hdrs = LrHttp.post( "https://reqres.in/api/users", postBody, headers, "POST" ,5000)
+                        --     if response then
+                        --         LrDialogs.message("Form Values", response)
+                        --     else
+                        --         LrDialogs.message("Form Values", "API issue")
+                        --     end
+                        -- end )
+
+                        -- --Get Method
+
+                        -- local headers = {
+                        --     { field = 'Content-Type', value = "application/json" }
+                        --     -- { field = 'Authorization', value = "auth_header" },
+                        --     -- { field = 'Content-Length', value = 1000 },
+                        --     -- { field = 'Content-MD5', value = LrMD5.digest( 'something' ) },
+                        -- }
+                        
+                        -- import "LrTasks".startAsyncTask( function()
+                        --     local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
+                        --     LrDialogs.message("Form Values", "API call initiate")
+                        --     if response then
+                        --         LrDialogs.message("Form Values", response)
+                        --     else
+                        --         LrDialogs.message("Form Values", "API issue")
+                        --     end
+                        -- end )
+ 
+                        --LrDialogs.message("Form Values", "Simple dialog button")
 					end
 				},
             }, -- end row
@@ -109,7 +172,9 @@ local function showCustomDialogWithObserver()
 				spacing = f:control_spacing(),
                 f:static_text {
                     fill_horizontal = 1,
-                    text_color = LrColor( 1, 0, 0 ),
+                    text_color = LrColor('blue'),
+                  
+
                     title = LrView.bind(
                     {
                         keys = {
@@ -148,6 +213,7 @@ local function showCustomDialogWithObserver()
 		} -- end column
 		
 		LrDialogs.presentModalDialog {
+                text_color = LrColor("blue"),
 				title = "Custom Dialog Observer",
 				contents = c
 			}
