@@ -27,7 +27,10 @@ local LrColor = import 'LrColor'
 local LrLogger = import 'LrLogger'
 local share = LrView.share
 local LrHttp = import "LrHttp"
-local LrMD5 = import "LrMD5"
+local LrApplication = import "LrApplication"
+local catalog = LrApplication.activeCatalog()
+local targetPhotos = catalog.targetPhotos
+local targetPhotosCopies = targetPhotos
 
 local function showCustomDialogWithObserver()
 
@@ -40,6 +43,13 @@ local function showCustomDialogWithObserver()
 	    props.isChecked = true
 		props.selectedButton = "male"
 		
+        local filenames_field = f:edit_field {
+            title = "filenames",
+            height_in_lines = 10,
+            width_in_chars = 40,
+            value = '',
+          }
+
 		local c = f:column {
 			bindToObject = props,
 			spacing = f:dialog_spacing(),
@@ -80,33 +90,41 @@ local function showCustomDialogWithObserver()
 						--props.myObservedString = updateField.value
 					end
 				},
+                filenames_field,
                 f:push_button {
 					title = "Normal Dialog",
 					action = function()
-                        
-
-                        --Post Method
-
-                        local headers = {
-                            { field = 'Content-Type', value = "application/json" }
-                        }
-                        
-                        -- local postBody = {
-                        --     { field =  "name" , value = "morpheuss" },
-                        --     { field =  "job" , value = "leader" },
-                        -- }
-                        local postBody = {
-                            name = "morpheuss",
-                            job = "leader"
-                        }
                         import "LrTasks".startAsyncTask( function()
-                            local response, hdrs = LrHttp.post( "https://reqres.in/api/users", postBody, headers, "POST" ,5000)
-                            if response then
-                                LrDialogs.message("Form Values", response)
-                            else
-                                LrDialogs.message("Form Values", "API issue")
+                        if targetPhotosCopies == nil then
+                            LrDialogs.message("Form Values", "No photo")
+                        else
+                            for p, photo in ipairs(catalog:getAllPhotos()) do
+                                if filenames_field.value == nil  then
+                                    filenames_field.value = photo:getFormattedMetadata('fileName')
+                                else
+                                     filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata('fileName')
+                                end
                             end
-                        end )
+                        end
+                    end)
+
+                        -- local logs_field;
+                        -- import "LrTasks".startAsyncTask( function()
+                        --   logs_field.value = "Starting search\n"
+                
+                        --   local catalog = import "LrApplication".activeCatalog()
+                        --   catalog:withWriteAccessDo("Batch set rating", function( context )
+                        --     for i,photo in ipairs(catalog:getAllPhotos()) do
+                        --       for fname in string.gmatch(filenames_field.value, "%w+") do
+                        --         if string.find(photo:getFormattedMetadata('fileName'), fname) then
+                        --           logs_field = logs_field .. rating_field.value
+                        --         end
+                        --       end
+                        --     end
+                        --   end)
+                        -- end)
+                        -- LrDialogs.message("Form Values", logs_field)
+
 
                         -- -- Post Method
                         -- local headers = {
@@ -143,8 +161,6 @@ local function showCustomDialogWithObserver()
                         --         LrDialogs.message("Form Values", "API issue")
                         --     end
                         -- end )
- 
-                        --LrDialogs.message("Form Values", "Simple dialog button")
 					end
 				},
             }, -- end row
