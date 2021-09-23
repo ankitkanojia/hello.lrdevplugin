@@ -84,7 +84,7 @@ local function showCustomDialogWithObserver()
                             --     end
                             -- end )
 
-                            -- --Get Method
+                            --Get Method
                             -- local headers = {
                             --     { field = 'Content-Type', value = "application/json" }
                             --     -- { field = 'Authorization', value = "auth_header" },
@@ -93,11 +93,17 @@ local function showCustomDialogWithObserver()
                             -- }
                             -- import "LrTasks".startAsyncTask( function()
                             --     local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
-                            --     LrDialogs.message("Form Values", "API call initiate")
+                            --     --local convertedObj = JSON:encode_pretty(response)
+                            --     local json = require 'json'
+	                        --     local auth = json.decode(response)
+                                
                             --     if response then
-                            --         LrDialogs.message("Form Values", response)
+                            --         for k, v in pairs(auth.array) do                
+                            --             LrDialogs.message("Form Values", k)
+                            --         end
+                            --         filenames_field.value = auth.data --convertedObj.data
                             --     else
-                            --         LrDialogs.message("Form Values", "API issue")
+                            --         LrDialogs.message("Form Values", json.decode(response))
                             --     end
                             -- end )
                         end
@@ -106,25 +112,39 @@ local function showCustomDialogWithObserver()
                     f:push_button {
                         title = "Normal Dialog",
                         action = function()
+
+                            local filepath 
+                            local filename 
+
                             import "LrTasks".startAsyncTask(
                                 function()
                                     if targetPhotosCopies == nil then
                                         LrDialogs.message("Form Values", "No photo")
                                     else
                                         for p, photo in ipairs(targetPhotosCopies) do
-                                            if filenames_field.value == nil then
-                                                filenames_field.value = photo:getFormattedMetadata("fileName")
+                                            if photo:getRawMetadata('pickStatus') == 1 then
+                                                filepath = photo:getRawMetadata('path')
+                                                filename = photo:getRawMetadata('fileName')
+                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Flagged " .. photo:getRawMetadata('path')
                                             else
-                                                filenames_field.value =
-                                                    filenames_field.value ..
-                                                    "\n" .. photo:getFormattedMetadata("fileName")
+                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Not Flagged " .. photo:getRawMetadata('path')
                                             end
                                         end
                                     end
                                 end
                             )
 
-                           -- https://github.com/sztupy/batchrating.lrdevplugin/blob/master/batchrating.lrdevplugin/BatchRatingDialog.lua
+                            local mimeChunks = {
+                                {
+                                    name = 'file',
+                                    filePath = filepath,
+                                    fileName = filename, --LrPathUtils.leafName(filepath),
+                                    contentType = 'multipart/form-data'
+                                }
+                            }
+                            local postUrl = ""
+                            local result, hdrs = LrHttp.postMultipart( postUrl, mimeChunks )	
+                            --https://github.com/sztupy/batchrating.lrdevplugin/blob/master/batchrating.lrdevplugin/BatchRatingDialog.lua
                         end
                     }
                 }, -- end row
@@ -192,11 +212,22 @@ local function showCustomDialogWithObserver()
                 }
             } -- end column
 
-            LrDialogs.presentModalDialog {
-                text_color = LrColor("blue"),
-                title = "Custom Dialog Observer",
-                contents = c
-            }
+            local result =
+                LrDialogs.presentModalDialog(
+                {
+                    -- display cuustom dialog
+                    title = "Dialog Main Title",
+                    contents = c, -- defined view hierarchy
+                    cancelVerb = '< exclude >',
+                    actionVerb = 'Close Window',
+                }
+            )
+            if (result == "cancel") then --cancel the progress after pushing the "Cancel"-Button
+                if progressBar ~= nil then
+                   -- progressBar:setCancelable(false)
+                   -- progressBar:cancel()
+                end
+            end
         end
     ) -- end main function
 end
