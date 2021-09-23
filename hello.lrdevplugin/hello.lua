@@ -85,33 +85,37 @@ local function showCustomDialogWithObserver()
                             -- end )
 
                             --Get Method
-                            local headers = {
-                                { field = 'Content-Type', value = "application/json" }
-                                -- { field = 'Authorization', value = "auth_header" },
-                                -- { field = 'Content-Length', value = 1000 },
-                                -- { field = 'Content-MD5', value = LrMD5.digest( 'something' ) },
-                            }
-                            import "LrTasks".startAsyncTask( function()
-                                local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
-                                --local convertedObj = JSON:encode_pretty(response)
-                                local json = require 'json'
-	                            local auth = json.decode(response)
+                            -- local headers = {
+                            --     { field = 'Content-Type', value = "application/json" }
+                            --     -- { field = 'Authorization', value = "auth_header" },
+                            --     -- { field = 'Content-Length', value = 1000 },
+                            --     -- { field = 'Content-MD5', value = LrMD5.digest( 'something' ) },
+                            -- }
+                            -- import "LrTasks".startAsyncTask( function()
+                            --     local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
+                            --     --local convertedObj = JSON:encode_pretty(response)
+                            --     local json = require 'json'
+	                        --     local auth = json.decode(response)
                                 
-                                if response then
-                                    for k, v in pairs(auth.array) do                
-                                        LrDialogs.message("Form Values", k)
-                                    end
-                                    filenames_field.value = auth.data --convertedObj.data
-                                else
-                                    LrDialogs.message("Form Values", json.decode(response))
-                                end
-                            end )
+                            --     if response then
+                            --         for k, v in pairs(auth.array) do                
+                            --             LrDialogs.message("Form Values", k)
+                            --         end
+                            --         filenames_field.value = auth.data --convertedObj.data
+                            --     else
+                            --         LrDialogs.message("Form Values", json.decode(response))
+                            --     end
+                            -- end )
                         end
                     },
                     filenames_field,
                     f:push_button {
                         title = "Normal Dialog",
                         action = function()
+
+                            local filepath 
+                            local filename 
+
                             import "LrTasks".startAsyncTask(
                                 function()
                                     if targetPhotosCopies == nil then
@@ -119,16 +123,28 @@ local function showCustomDialogWithObserver()
                                     else
                                         for p, photo in ipairs(targetPhotosCopies) do
                                             if photo:getRawMetadata('pickStatus') == 1 then
-                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Flagged"
+                                                filepath = photo:getRawMetadata('path')
+                                                filename = photo:getRawMetadata('fileName')
+                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Flagged " .. photo:getRawMetadata('path')
                                             else
-                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Not Flagged" 
+                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Not Flagged " .. photo:getRawMetadata('path')
                                             end
                                         end
                                     end
                                 end
                             )
 
-                           -- https://github.com/sztupy/batchrating.lrdevplugin/blob/master/batchrating.lrdevplugin/BatchRatingDialog.lua
+                            local mimeChunks = {
+                                {
+                                    name = 'file',
+                                    filePath = filepath,
+                                    fileName = filename, --LrPathUtils.leafName(filepath),
+                                    contentType = 'multipart/form-data'
+                                }
+                            }
+                            local postUrl = ""
+                            local result, hdrs = LrHttp.postMultipart( postUrl, mimeChunks )	
+                            --https://github.com/sztupy/batchrating.lrdevplugin/blob/master/batchrating.lrdevplugin/BatchRatingDialog.lua
                         end
                     }
                 }, -- end row
