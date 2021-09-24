@@ -12,6 +12,8 @@ local catalog = LrApplication.activeCatalog()
 local targetPhotos = catalog.targetPhotos
 local targetPhotosCopies = targetPhotos
 local JSON = require 'JSON'
+local LrPathUtils = import "LrPathUtils"
+local LrFileUtils = import "LrFileUtils"
 
 local function uploadFile(filePath)
     local fileName = LrPathUtils.leafName( filePath )
@@ -101,6 +103,28 @@ local function showCustomDialogWithObserver()
                                 local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
 	                            filenames_field.value = response .. "\n\nDecoded\nColor:".. JSON:decode(response).data.color
                              end )
+                        end
+                    },
+                    f:push_button {
+                        title = "Download FIle",
+                        action = function()
+                            -- local resp = http:request({
+                            --     method = "get", 
+                            --     url = "http://developer.echonest.com/api/v4/artist/images?api_key=MY_API_KEY_HERE&name=zedd&format=json&results=1&start=0&license=unknown",
+                            -- }); 
+
+                            -- Create Folder Functionality
+                            local imgPreviewPath = LrPathUtils.child(_PLUGIN.path, "Exported Photos")
+                            if LrFileUtils.exists(imgPreviewPath) ~= true then
+                                LrFileUtils.createDirectory(imgPreviewPath)
+                            end
+
+                            LrDialogs.message("Called Download Button")
+
+                            -- local out = io.open(jpg_path, 'wb')
+                            -- io.output(out)
+                            -- io.write(thumbnail)
+                            -- io.close(out)
                         end
                     }
                 },        
