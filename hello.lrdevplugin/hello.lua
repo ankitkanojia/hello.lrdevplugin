@@ -108,23 +108,23 @@ local function showCustomDialogWithObserver()
                     f:push_button {
                         title = "Download FIle",
                         action = function()
-                            -- local resp = http:request({
-                            --     method = "get", 
-                            --     url = "http://developer.echonest.com/api/v4/artist/images?api_key=MY_API_KEY_HERE&name=zedd&format=json&results=1&start=0&license=unknown",
-                            -- }); 
-
-                            -- Create Folder Functionality
+                            -- -- Create Folder Functionality
                             local imgPreviewPath = LrPathUtils.child(_PLUGIN.path, "Exported Photos")
                             if LrFileUtils.exists(imgPreviewPath) ~= true then
                                 LrFileUtils.createDirectory(imgPreviewPath)
+                                LrFileUtils.makeFileWritable(imgPreviewPath)
                             end
 
-                            LrDialogs.message("Called Download Button")
+                            import "LrTasks".startAsyncTask( function()
+                                local body, code = LrHttp.get("http://pbs.twimg.com/media/CCROQ8vUEAEgFke.jpg")
+                                if not body then error(code) end
 
-                            -- local out = io.open(jpg_path, 'wb')
-                            -- io.output(out)
-                            -- io.write(thumbnail)
-                            -- io.close(out)
+                                -- save the content to a file
+                                local file = assert(io.open(imgPreviewPath .. "\\test.jpg", 'wb')) 
+                                file:write(body)
+                                file:close()
+                                LrDialogs.message("Image Download")
+                            end)
                         end
                     }
                 },        
