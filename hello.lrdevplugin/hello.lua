@@ -12,6 +12,8 @@ local catalog = LrApplication.activeCatalog()
 local targetPhotos = catalog.targetPhotos
 local targetPhotosCopies = targetPhotos
 local JSON = require 'JSON'
+local LrPathUtils = import "LrPathUtils"
+local LrFileUtils = import "LrFileUtils"
 
 local function uploadFile(filePath)
     local fileName = LrPathUtils.leafName( filePath )
@@ -99,8 +101,30 @@ local function showCustomDialogWithObserver()
                              
                              import "LrTasks".startAsyncTask( function()
                                 local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
-	                            filenames_field.value = JSON:decode(response).data.id
+	                            filenames_field.value = response .. "\n\nDecoded\nColor:".. JSON:decode(response).data.color
                              end )
+                        end
+                    },
+                    f:push_button {
+                        title = "Download FIle",
+                        action = function()
+                            -- -- Create Folder Functionality
+                            local imgPreviewPath = LrPathUtils.child(_PLUGIN.path, "Exported Photos")
+                            if LrFileUtils.exists(imgPreviewPath) ~= true then
+                                LrFileUtils.createDirectory(imgPreviewPath)
+                                LrFileUtils.makeFileWritable(imgPreviewPath)
+                            end
+
+                            import "LrTasks".startAsyncTask( function()
+                                local body, code = LrHttp.get("http://pbs.twimg.com/media/CCROQ8vUEAEgFke.jpg")
+                                if not body then error(code) end
+
+                                -- save the content to a file
+                                local file = assert(io.open(imgPreviewPath .. "\\test.jpg", 'wb')) 
+                                file:write(body)
+                                file:close()
+                                LrDialogs.message("Image Download")
+                            end)
                         end
                     }
                 },        
