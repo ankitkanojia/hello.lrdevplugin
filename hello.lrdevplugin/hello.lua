@@ -12,6 +12,29 @@ local catalog = LrApplication.activeCatalog()
 local targetPhotos = catalog.targetPhotos
 local targetPhotosCopies = targetPhotos
 
+local function uploadFile(filePath)
+    local fileName = LrPathUtils.leafName( filePath )
+    local mimeChunks = {}
+    mimeChunks[ #mimeChunks + 1 ] = { name = 'api_sig', value = "test value"}
+    mimeChunks[#mimeChunks + 1] = {
+        name = "file",
+        filePath = filePath,
+        fileName = fileName,
+        contentType = "image/jpeg"  --multipart/form-data  --application/octet-stream
+    }
+    import "LrTasks".startAsyncTask( 
+        function()
+            local postUrl = "http://cms.local.com/api/v1/upload"
+            local result, hdrs = LrHttp.postMultipart(postUrl, mimeChunks)
+            if result then
+                LrDialogs.message("Image uploaded.", result)
+            else
+                LrDialogs.message("Error", "API issue")
+            end
+        end
+    )
+end
+
 local function showCustomDialogWithObserver()
     LrFunctionContext.callWithContext(
         "showCustomDialogWithObserver",
@@ -66,7 +89,14 @@ local function showCustomDialogWithObserver()
                 },
                 f:row {
                     f:push_button {
-                        title = "Show Detail",
+                        title = "Download Button",
+                        action = function()
+                        end
+                    }
+                },        
+                f:row {
+                    f:push_button {
+                        title = "API call Methods",
                         action = function()
                             -- -- Post Method
                             -- local headers = {
@@ -110,12 +140,8 @@ local function showCustomDialogWithObserver()
                     },
                     filenames_field,
                     f:push_button {
-                        title = "Normal Dialog",
+                        title = "Upload Images",
                         action = function()
-
-                            local filepath 
-                            local filename 
-
                             import "LrTasks".startAsyncTask(
                                 function()
                                     if targetPhotosCopies == nil then
@@ -123,28 +149,17 @@ local function showCustomDialogWithObserver()
                                     else
                                         for p, photo in ipairs(targetPhotosCopies) do
                                             if photo:getRawMetadata('pickStatus') == 1 then
-                                                filepath = photo:getRawMetadata('path')
-                                                filename = photo:getRawMetadata('fileName')
-                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Flagged " .. photo:getRawMetadata('path')
+                                                --photo:getRawMetadata('path')   -- photo:getRawMetadata('fileName')
+                                                uploadFile(assert(photo:getRawMetadata('path')));
+                                                --filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Flagged " .. photo:getRawMetadata('path')
                                             else
-                                                filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Not Flagged " .. photo:getRawMetadata('path')
+                                                uploadFile(assert(photo:getRawMetadata('path')));
+                                                --filenames_field.value = filenames_field.value .. "\n" .. photo:getFormattedMetadata("fileName") .. " -- Not Flagged " .. photo:getRawMetadata('path')
                                             end
                                         end
                                     end
                                 end
                             )
-
-                            local mimeChunks = {
-                                {
-                                    name = 'file',
-                                    filePath = filepath,
-                                    fileName = filename, --LrPathUtils.leafName(filepath),
-                                    contentType = 'multipart/form-data'
-                                }
-                            }
-                            local postUrl = ""
-                            local result, hdrs = LrHttp.postMultipart( postUrl, mimeChunks )	
-                            --https://github.com/sztupy/batchrating.lrdevplugin/blob/master/batchrating.lrdevplugin/BatchRatingDialog.lua
                         end
                     }
                 }, -- end row
