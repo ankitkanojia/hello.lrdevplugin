@@ -99,7 +99,7 @@ local function showCustomDialogWithObserver()
                              
                              import "LrTasks".startAsyncTask( function()
                                 local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
-	                            filenames_field.value = JSON:decode(response).data.id
+	                            filenames_field.value = response .. "\n\nDecoded\nColor:".. JSON:decode(response).data.color
                              end )
                         end
                     }
