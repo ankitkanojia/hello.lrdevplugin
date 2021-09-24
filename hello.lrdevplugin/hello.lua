@@ -11,6 +11,7 @@ local LrApplication = import "LrApplication"
 local catalog = LrApplication.activeCatalog()
 local targetPhotos = catalog.targetPhotos
 local targetPhotosCopies = targetPhotos
+local JSON = require 'JSON'
 
 local function uploadFile(filePath)
     local fileName = LrPathUtils.leafName( filePath )
@@ -89,8 +90,17 @@ local function showCustomDialogWithObserver()
                 },
                 f:row {
                     f:push_button {
-                        title = "Download Button",
+                        title = "JSON convert",
                         action = function()
+                             -- Get Method JSON Convert
+                             local headers = {
+                                { field = 'Content-Type', value = "application/json" }
+                             }
+                             
+                             import "LrTasks".startAsyncTask( function()
+                                local response, hdrs = LrHttp.get( "https://reqres.in/api/products/3", headers)
+	                            filenames_field.value = JSON:decode(response).data.id
+                             end )
                         end
                     }
                 },        
